@@ -1,0 +1,7 @@
+---
+- name: Test custom collection module
+  hosts: localhost
+  tasks:
+    - name: Say hello
+      moukail.my_collection.hello_module:
+        name: "World"
