@@ -20,9 +20,14 @@ ansible-playbook test_playbook.yml -vvv
 ansible-galaxy role init myrole --init-path ./roles
 ansible-galaxy role list --roles-path ./roles
 ansible-galaxy role remove myrole --roles-path ./roles
-ansible-galaxy role search nginx
+
 ansible-galaxy role info nginx
 ansible-galaxy role import --role-name myrole --token xxxxxxxxxx github_user github_repo
 ansible-galaxy role setup source github_user github_repo secret
+
+ansible-galaxy role search nginxinc
+ansible-galaxy role info nginxinc.nginx
+ansible-galaxy role install nginxinc.nginx
+ansible-galaxy role install elastic.elasticsearch
 
 ```
