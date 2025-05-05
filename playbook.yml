@@ -1,7 +1,7 @@
 - hosts: database
   become: true
   roles:
-    - role: moukail.web.mysql
+    - role: moukail.webservers.mysql
       vars:
         db_root_password: Pass_1234
 
@@ -24,12 +24,12 @@
         group: www-data
 
   roles:
-    - role: moukail.web.php
+    - role: moukail.webservers.php
       vars:
         php_ver: 8.4
         php_version: 8.4.6
 
-    - role: moukail.web.nginx
+    - role: moukail.webservers.nginx
       compile: true
       vars:
         user: www-data

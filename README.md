@@ -16,6 +16,7 @@ ansible-galaxy collection build collections/moukail/my_collection --output-path 
 ansible-galaxy collection publish moukail-my_collection-*.tar.gz --token xxxxxxxxxxxxxxxxxxxxxxxxxxx
 ansible-galaxy collection install moukail-my_collection-*.tar.gz -p ~/.ansible/collections
 ansible-galaxy collection install /path/to/collection -p ./collections
+ansible-galaxy collection install git+https://github.com/moukail/ansible-collection-moukail
 
 ansible-galaxy collection install -r requirements.yml
 ansible-galaxy collection list
