@@ -1,0 +1,36 @@
+- hosts: database
+  become: true
+  roles:
+    - role: moukail.web.mysql
+      vars:
+        db_root_password: Pass_1234
+
+- hosts: web
+  become: true
+
+  pre_tasks:
+    - name: Ensure group "www-data" exists
+      group:
+        name: www-data
+        system: yes
+        state: present
+
+    - name: Add the user 'www-data'
+      user:
+        name: www-data
+        create_home: no
+        system: yes
+        state: present
+        group: www-data
+
+  roles:
+    - role: moukail.web.php
+      vars:
+        php_ver: 8.4
+        php_version: 8.4.6
+
+    - role: moukail.web.nginx
+      compile: true
+      vars:
+        user: www-data
+        nginx_ver: 1.28.0

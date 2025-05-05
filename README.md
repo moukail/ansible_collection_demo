@@ -2,6 +2,11 @@
 
 Documentation for the collection.
 
+###
+```bash
+docker run -dit --name galaxy ansible/galaxy tail -f /dev/null
+```
+
 ### collection
 ```bash
 ansible-galaxy collection init moukail.my_collection --init-path ./collections
@@ -9,7 +14,10 @@ chmod +x collections/moukail/my_collection/plugins/modules/hello_module.py
 
 ansible-galaxy collection build collections/moukail/my_collection --output-path ./
 ansible-galaxy collection publish moukail-my_collection-*.tar.gz --token xxxxxxxxxxxxxxxxxxxxxxxxxxx
-ansible-galaxy collection install moukail-my_collection-*.tar.gz
+ansible-galaxy collection install moukail-my_collection-*.tar.gz -p ~/.ansible/collections
+ansible-galaxy collection install /path/to/collection -p ./collections
+
+ansible-galaxy collection install -r requirements.yml
 ansible-galaxy collection list
 
 ansible-playbook test_playbook.yml -vvv
