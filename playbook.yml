@@ -27,7 +27,7 @@
     - role: moukail.webservers.php
       vars:
         php_ver: 8.4
-        php_version: 8.4.6
+        php_version: 8.4.8
 
     - role: moukail.webservers.nginx
       compile: true
