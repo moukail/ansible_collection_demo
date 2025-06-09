@@ -28,6 +28,7 @@ vagrant up --provider=virtualbox --provision
 #### connect to VM
 ```bash
 vagrant ssh
+vagrant ssh machine0
 ```
 
 #### 

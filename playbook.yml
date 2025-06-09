@@ -1,7 +1,7 @@
 - hosts: database
   become: true
   roles:
-    - role: moukail.webservers.mysql
+    - role: moukail.webservers.postgresql
       vars:
         db_root_password: Pass_1234
 

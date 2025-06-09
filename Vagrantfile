@@ -29,9 +29,9 @@ distros = [
   "generic/alma9",
   "generic/centos9s",
   "centos/stream9",
+  "centos/stream10",
   "ubuntu/jammy64",
   "debian/bookworm64",
-  "centos/stream10",
 ]
 
 Vagrant.configure("2") do |config|
@@ -53,7 +53,7 @@ Vagrant.configure("2") do |config|
     ansible.version = "latest"
     ansible.verbose = "-v"
     ansible.groups = {
-      "web" => ["machine0", "machine1", "machine2", "machine3", "machine4", "machine5", "machine6", "machine7"], #
+      #"web" => ["machine0", "machine1", "machine2", "machine3", "machine4", "machine5", "machine6", "machine7"], #
       "database" => ["machine0", "machine1", "machine2", "machine3", "machine4", "machine5", "machine6", "machine7"], #
     }
   end
