@@ -8,7 +8,14 @@
 - hosts: web
   become: true
 
+  collections:
+    - moukail.webservers
+
   pre_tasks:
+    - name: Show filtered value
+      ansible.builtin.debug:
+        msg: "{{ 'hello world' | moukail.webservers.my_uppercase }}"
+
     - name: Ensure group "www-data" exists
       group:
         name: www-data
