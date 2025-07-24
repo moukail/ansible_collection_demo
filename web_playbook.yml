@@ -1,0 +1,43 @@
+- hosts: database
+  become: true
+  roles:
+    - role: moukail.webservers.postgresql
+      vars:
+        db_root_password: Pass_1234
+
+- hosts: web
+  become: true
+
+  collections:
+    - moukail.webservers
+
+  pre_tasks:
+    - name: Show filtered value
+      ansible.builtin.debug:
+        msg: "{{ 'hello world' | moukail.webservers.my_uppercase }}"
+
+    - name: Ensure group "www-data" exists
+      group:
+        name: www-data
+        system: yes
+        state: present
+
+    - name: Add the user 'www-data'
+      user:
+        name: www-data
+        create_home: no
+        system: yes
+        state: present
+        group: www-data
+
+  roles:
+    - role: moukail.webservers.php
+      vars:
+        php_ver: 8.4
+        php_version: 8.4.8
+
+    - role: moukail.webservers.nginx
+      compile: true
+      vars:
+        user: www-data
+        nginx_ver: 1.28.0

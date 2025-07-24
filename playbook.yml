@@ -1,43 +1,91 @@
-- hosts: database
+- hosts: all
   become: true
-  roles:
-    - role: moukail.webservers.postgresql
-      vars:
-        db_root_password: Pass_1234
+  gather_facts: true
 
-- hosts: web
-  become: true
+  vars:
+    new_iface: ens4
 
-  collections:
-    - moukail.webservers
+  tasks:
+    - name: Show interface list
+      debug:
+        var: ansible_facts.interfaces
 
-  pre_tasks:
-    - name: Show filtered value
-      ansible.builtin.debug:
-        msg: "{{ 'hello world' | moukail.webservers.my_uppercase }}"
+    - name: Set old_iface to first non-loopback interface
+      set_fact:
+        #old_iface: "{{ ansible_facts.interfaces | difference(['lo']) | first }}"
+        old_iface: "eth1"
 
-    - name: Ensure group "www-data" exists
-      group:
-        name: www-data
-        system: yes
-        state: present
+    - name: Get MAC address of {{ old_iface }}
+      command: ip link show "{{ old_iface }}"
+      register: ip_link
 
-    - name: Add the user 'www-data'
-      user:
-        name: www-data
-        create_home: no
-        system: yes
-        state: present
-        group: www-data
+    - name: Extract MAC address
+      set_fact:
+        iface_mac: "{{ ip_link.stdout | regex_search('(?i)link/ether ([0-9a-f:]{2}(:[0-9a-f:]{2}){5})', '\\1') | first }}"
+        #iface_mac: "{{ ip_link.stdout_lines | regex_search('link/ether ([0-9a-f:]{17})', '\\1') | first }}"
 
-  roles:
-    - role: moukail.webservers.php
-      vars:
-        php_ver: 8.4
-        php_version: 8.4.8
+    - name: Get connection name of {{ old_iface }}
+      command: nmcli -t -f NAME,DEVICE connection show --active
+      register: conn_name_raw
 
-    - role: moukail.webservers.nginx
-      compile: true
-      vars:
-        user: www-data
-        nginx_ver: 1.28.0
+    - name: Extract connection_name
+      set_fact:
+        connection_name: "{{ conn_name_raw.stdout_lines | select('search', old_iface) | map('split', ':') | map('first') | list | first }}"
+
+    - name: show MAC address
+      debug:
+        msg: "MAC: {{iface_mac}}, CONN: {{connection_name}}"
+
+    - name: Create udev rule to rename interface
+      copy:
+        dest: /etc/udev/rules.d/70-persistent-net-{{ new_iface }}.rules
+        content: |
+          SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="{{ iface_mac }}", NAME="{{ new_iface }}"
+
+    #- name: Delete inactive connections
+    #  shell: >
+    #    nmcli -t -f UUID,DEVICE connection show | awk -F: '$2 == "" {print $1 }' | xargs -r -n1 nmcli connection delete
+
+    - name: Update NetworkManager connection to use new interface name
+      command: >
+        nmcli con modify "{{ connection_name }}" connection.id "{{ new_iface }}" connection.interface-name "{{ new_iface }}"
+
+    - name: Check if ifcfg-{{ old_iface }} exists
+      stat:
+        path: "{{ path_prefix }}/ifcfg-{{ old_iface }}"
+      register: ifcfg_file
+
+    - name: Rename and modify interface config
+      when: ifcfg_file.stat.exists
+      block:
+        - name: Rename the config file
+          command: mv "{{ path_prefix }}/ifcfg-{{ old_iface }}" "{{ path_prefix }}/ifcfg-{{ new_iface }}"
+
+        - name: Update DEVICE= to new interface name
+          replace:
+            path: "/etc/sysconfig/network-scripts/ifcfg-{{ new_iface }}"
+            regexp: '^DEVICE=.*'
+            replace: "DEVICE={{ new_iface }}"
+
+        - name: Update NAME= to match new name
+          replace:
+            path: "/etc/sysconfig/network-scripts/ifcfg-{{ new_iface }}"
+            regexp: '^NAME=.*'
+            replace: "NAME=\"{{ connection_name }}\""
+
+    - name: Show confirmation
+      debug:
+        msg: "Renamed ifcfg-{{ old_iface }} to ifcfg-{{ new_iface }}"
+      when: ifcfg_file.stat.exists
+
+    - name: Ensure NetworkManager is enabled and started
+      systemd:
+        name: NetworkManager
+        enabled: yes
+        state: started
+
+    - name: Reboot system to apply changes
+      reboot:
+        msg: "Rebooting to apply interface rename from {{ old_iface }} to {{ new_iface }}"
+        connect_timeout: 5
+        reboot_timeout: 300

@@ -1,4 +1,5 @@
 # https://portal.cloud.hashicorp.com/vagrant/discover
+#config.vm.box = "generic/rhel8"
 #config.vm.box = "generic/rhel9" # issue with libxml2-devel needed for PHP
 #config.vm.box = "generic/rocky9"
 #config.vm.box = "generic/oracle9"
@@ -23,13 +24,13 @@
 #config.vm.box = "generic/opensuse42"
 
 distros = [
-  #"generic/rhel9", # subscription is required
+  "generic/rhel8", # subscription is required
   #"generic/rocky9",
   #"generic/oracle9",
   #"generic/alma9",
   #"generic/centos9s",
   #"centos/stream9",
-  "centos/stream10",
+  #"centos/stream10",
   #"ubuntu/jammy64",
   #"debian/bookworm64",
 ]
@@ -41,8 +42,12 @@ Vagrant.configure("2") do |config|
       machine.vm.hostname = "machine#{index}"
       machine.vm.network "private_network", ip: "192.168.56.#{100 + index}"
       machine.vm.synced_folder ".", "/vagrant", disabled: true
+      # Provisioner to run init.sh script
+
     end
   end
+
+  config.vm.provision "shell", path: ".vagrant/init.sh"
 
   #
   # Run Ansible from the Vagrant Host
