@@ -1,38 +1,48 @@
 ---
 - name: Test custom collection module
   hosts: all
+  become: true
   strategy: free
 
   tasks:
-  - name: make Volume Group
-    community.general.lvg:
-     vg: "VGtest"
-     pvs: /dev/sdb
-     state: present
+    - name: Create a new primary partition for LVM
+      community.general.parted:
+        device: /dev/sdb
+        label: gpt
+        unit: MiB
+        name: test
+        number: 1
+        flags: [ lvm ]
+        state: present
+        #part_start: 1GiB
 
-  - name: make Logical volume
-    community.general.lvol:
-      vg: VGtest
-      lv: LVtest1
-      size: 2g
-      resize: true
+    - name: make Volume Group
+      community.general.lvg:
+       vg: "VGtest"
+       pvs: /dev/sdb1,/dev/sdc
+       state: present
 
-  - name: Create filesystem
-    community.general.filesystem:
-      fstype: xfs
-      dev: /dev/VGtest/LVtest1
-      state: present
-  
-  - name: Make dirs
-    ansible.builtin.file:
-      path: /lv_test1
-      state: directory
+    - name: make Logical volume
+      community.general.lvol:
+        vg: VGtest
+        lv: LVtest1
+        size: 2g
+        resizefs: true
 
-  - name: Mount device
-    ansible.posix.mount:
-      path: /lv_test1
-      fstype: xfs
-      src: /dev/mapper/VGtest-LVtest1
+    - name: Create filesystem
+      community.general.filesystem:
+        fstype: xfs
+        dev: /dev/VGtest/LVtest1
+        state: present
 
+    - name: Make dirs
+      ansible.builtin.file:
+        path: /lv_test1
+        state: directory
 
-
+    - name: Mount device
+      ansible.posix.mount:
+        path: /lv_test1
+        fstype: xfs
+        src: /dev/mapper/VGtest-LVtest1
+        state: present

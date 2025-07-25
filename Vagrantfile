@@ -44,6 +44,10 @@ Vagrant.configure("2") do |config|
       machine.vm.synced_folder ".", "/vagrant", disabled: true
       # Provisioner to run init.sh script
 
+      (0..3).each do |i|
+        machine.vm.disk :disk, size: "2GB", name: "disk-#{i}"
+      end
+
     end
   end
 
@@ -53,7 +57,7 @@ Vagrant.configure("2") do |config|
   # Run Ansible from the Vagrant Host
   #
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "playbook.yml"
+    ansible.playbook = "lvm_playbook.yml"
     ansible.compatibility_mode = "2.0"
     ansible.version = "latest"
     ansible.verbose = "-v"
